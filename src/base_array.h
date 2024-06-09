@@ -119,6 +119,11 @@ namespace arr
             {
                 indx += dims[ii] * (strides_[ii]);
             }
+            printf("Index ");
+            for(size_t dd=0; dd<ND; dd++)
+                printf("%li ",dims[dd]);
+            printf("= %li\n",indx + dims[ND-1]);
+
             return indx + dims[ND-1];
         }
 
@@ -135,11 +140,8 @@ namespace arr
 
         void print_row(std::array<size_t,ND> &indx) const
         {
-            printf("Index ");
-            for(size_t dd=0; dd<ND; dd++)
-                printf("%li ",indx[dd]);
+            
             size_t start_indx = get_index(indx);
-            printf("= %li\n",start_indx);
             for (size_t ii=0; ii<dims_[ND-1]; ii++)
             {
                 std::cout << data_[start_indx+ii] << " ";
@@ -148,7 +150,6 @@ namespace arr
 
         void print(size_t dim,std::array<size_t,ND> &indx) const
         {
-            printf("dim: %li\n",dim);
             if (dim==1)
             {
                 print_row(indx);
@@ -205,7 +206,7 @@ namespace arr
 
         void allocate(size_t n1) {allocate({n1});}
 
-        T& operator()(size_t n1) {operator()({n1});}
+        T& operator()(size_t n1) {return operator()({n1});}
     };
 
     template <typename T> class Array<T,2> : public Base_array<T,2>
@@ -226,7 +227,7 @@ namespace arr
 
         void allocate(size_t n1, size_t n2) {allocate({n1,n2});}
 
-        T& operator()(size_t n1, size_t n2) {operator()({n1,n2});}
+        T& operator()(size_t n1, size_t n2) {return operator()({n1,n2});}
     };
 
     template <typename T> class Array<T,3> : public Base_array<T,3>
@@ -247,7 +248,28 @@ namespace arr
 
         void allocate(size_t n1, size_t n2, size_t n3) {allocate({n1,n2,n3});}
 
-        T& operator()(size_t n1, size_t n2, size_t n3) {operator()({n1,n2,n3});}
+        T& operator()(size_t n1, size_t n2, size_t n3) {return operator()({n1,n2,n3});}
+    };
+
+    template <typename T> class Array<T,4> : public Base_array<T,4>
+    {
+        private:
+        using Base = Base_array<T,4>;
+        public:
+        using Base::Base;
+        using Base::allocate;
+        using Base::operator();
+
+        Array(T* extant_data, size_t n1, size_t n2, size_t n3, size_t n4) : Base(extant_data,{n1,n2,n3,n4}){}
+        Array(size_t n1, size_t n2, size_t n3, size_t n4) : Base({n1,n2,n3,n4}){}
+        Array(size_t n1, size_t n2, size_t n3, size_t n4,T fill_value) : Base({n1,n2,n3,n4}, fill_value){}
+        template<size_t S>
+        Array(size_t n1, size_t n2, size_t n3, size_t n4, std::array<T,S> &fill_values) : Base({n1,n2,n3,n4},fill_values){}
+        Array(size_t n1, size_t n2, size_t n3, size_t n4, std::vector<T> &fill_values) : Base({n1,n2,n3,n4},fill_values){}
+
+        void allocate(size_t n1, size_t n2, size_t n3, size_t n4) {allocate({n1,n2,n3,n4});}
+
+        T& operator()(size_t n1, size_t n2, size_t n3, size_t n4) {return operator()({n1,n2,n3,n4});}
     };
 }
 
