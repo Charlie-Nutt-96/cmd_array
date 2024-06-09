@@ -5,6 +5,7 @@
 
 #include <array>
 #include <vector>
+#include <iostream>
 
 namespace arr
 {
@@ -43,6 +44,10 @@ namespace arr
                 strd *= dims_[idim];
                 strides_[idim-1] = strd;
             }
+            printf("Strides: ");
+            for(size_t dim=0; dim<ND-1; dim++)
+                printf("%li ",strides_[dim]);
+            printf("\n");
         }
 
         public: 
@@ -105,16 +110,58 @@ namespace arr
                 data_[ii] = fill_value;
         }
 
-        size_t get_index(std::array<size_t,ND> dims)
+        size_t get_index(std::array<size_t,ND> dims) const
         {
             // TODO: bounds check on debug build
 
             size_t indx = 0;
             for(size_t ii=0;ii<ND-1;ii++)
             {
-                indx += dims[ii] * strides_[ii];
+                indx += dims[ii] * (strides_[ii]);
             }
-            return indx + dims[ND];
+            return indx + dims[ND-1];
+        }
+
+        void print() const
+        {
+            printf("%li dimensional Array of shape: ",ND);
+            for(size_t dim=0; dim<ND; dim++)
+                printf("%li ",dims_[dim]);
+            printf("\n");
+
+            std::array<size_t,ND> indx = {0};
+            print(ND,indx);
+        }
+
+        void print_row(std::array<size_t,ND> &indx) const
+        {
+            printf("Index ");
+            for(size_t dd=0; dd<ND; dd++)
+                printf("%li ",indx[dd]);
+            size_t start_indx = get_index(indx);
+            printf("= %li\n",start_indx);
+            for (size_t ii=0; ii<dims_[ND-1]; ii++)
+            {
+                std::cout << data_[start_indx+ii] << " ";
+            }
+        }
+
+        void print(size_t dim,std::array<size_t,ND> &indx) const
+        {
+            printf("dim: %li\n",dim);
+            if (dim==1)
+            {
+                print_row(indx);
+            }
+            else
+            {
+                for(size_t ii=0; ii<dims_[ND-dim]; ii++)
+                {
+                    indx[ND-dim]=ii;
+                    print(dim-1,indx);
+                    std::cout << std::endl;
+                }
+            }
         }
 
         // accessors
@@ -152,7 +199,8 @@ namespace arr
         Array(T* extant_data, size_t n1) : Base(extant_data,{n1}){}
         Array(size_t n1) : Base({n1}){}
         Array(size_t n1,T fill_value) : Base({n1}, fill_value){}
-        Array(size_t n1, std::array<T,1> &fill_values) : Base({n1},fill_values){}
+        template<size_t S>
+        Array(size_t n1, std::array<T,S> &fill_values) : Base({n1},fill_values){}
         Array(size_t n1, std::vector<T> &fill_values) : Base({n1},fill_values){}
 
         void allocate(size_t n1) {allocate({n1});}
@@ -172,12 +220,34 @@ namespace arr
         Array(T* extant_data, size_t n1, size_t n2) : Base(extant_data,{n1,n2}){}
         Array(size_t n1, size_t n2) : Base({n1,n2}){}
         Array(size_t n1, size_t n2,T fill_value) : Base({n1,n2}, fill_value){}
-        Array(size_t n1, size_t n2, std::array<T,2> &fill_values) : Base({n1,n2},fill_values){}
+        template<size_t S>
+        Array(size_t n1, size_t n2, std::array<T,S> &fill_values) : Base({n1,n2},fill_values){}
         Array(size_t n1, size_t n2, std::vector<T> &fill_values) : Base({n1,n2},fill_values){}
 
         void allocate(size_t n1, size_t n2) {allocate({n1,n2});}
 
         T& operator()(size_t n1, size_t n2) {operator()({n1,n2});}
+    };
+
+    template <typename T> class Array<T,3> : public Base_array<T,3>
+    {
+        private:
+        using Base = Base_array<T,3>;
+        public:
+        using Base::Base;
+        using Base::allocate;
+        using Base::operator();
+
+        Array(T* extant_data, size_t n1, size_t n2, size_t n3) : Base(extant_data,{n1,n2,n3}){}
+        Array(size_t n1, size_t n2, size_t n3) : Base({n1,n2,n3}){}
+        Array(size_t n1, size_t n2, size_t n3,T fill_value) : Base({n1,n2,n3}, fill_value){}
+        template<size_t S>
+        Array(size_t n1, size_t n2, size_t n3, std::array<T,S> &fill_values) : Base({n1,n2,n3},fill_values){}
+        Array(size_t n1, size_t n2, size_t n3, std::vector<T> &fill_values) : Base({n1,n2,n3},fill_values){}
+
+        void allocate(size_t n1, size_t n2, size_t n3) {allocate({n1,n2,n3});}
+
+        T& operator()(size_t n1, size_t n2, size_t n3) {operator()({n1,n2,n3});}
     };
 }
 
