@@ -7,7 +7,7 @@ int main ()
     printf("hello world!\n");
 
     std::array<float,6> arr = {1.1,2.2,3.3,4.4,5.5,6.6};
-    arr::Array<float,2> my1darray(3,2,arr);
+    cmda::Array<float,2> my1darray(3,2,arr);
 
     my1darray.print();
 

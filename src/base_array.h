@@ -7,18 +7,34 @@
 #include <vector>
 #include <iostream>
 
-namespace arr
+/**
+ * @brief contiguous multidimensional array namespace
+ * 
+ */
+namespace cmda
 {
+    /**
+     * @brief contiguous multidimensional array object
+     * 
+     * @tparam T data type the array is of
+     * @tparam ND the number of dimensions
+     */
     template <typename T, size_t ND>
     class Base_array
     {
-        private:
-        T* data_ = nullptr;
-        size_t size_ = 0;
-        std::array<size_t,ND> dims_ = {0};
-        std::array<size_t,ND-1> strides_;
-        bool owns_data_ = true;
+        protected:
+        T* data_ = nullptr; ///< contiguous block of data for the array
+        size_t size_ = 0; ///< the length of the contiguous block of data
+        std::array<size_t,ND> dims_ = {0}; ///< the length of each dimension of the array
+        std::array<size_t,ND-1> strides_; ///< the stride length of each dimension
+        bool owns_data_ = true; ///< flag to show if the class owns the data it points to
 
+        /**
+         * @brief Initilise the array, if null ptr allocates the data.
+         * 
+         * @param extant_data pointer to extant data to use, if nullptr then allocate its own memory
+         * @param dims the length of each dimension
+         */
         void init (T* extant_data, std::array<size_t,ND> dims)
         {
             size_ = 1;
@@ -51,6 +67,10 @@ namespace arr
         }
 
         public: 
+        /**
+         * @brief Destroy the Base_array object
+         * 
+         */
         virtual ~Base_array()
         {
             if (owns_data_ && data_!=nullptr)
@@ -63,15 +83,37 @@ namespace arr
         }
 
         //  constructors
-        Base_array() { }
+        /**
+         * @brief Construct a new Base_array object
+         * 
+         */
+        Base_array() {}
+        
+        /**
+         * @brief Construct a new Base_array object and allocate the size
+         * 
+         * @param dims the size of each dimension
+         */
         Base_array(const std::array<size_t,ND> dims) { init(nullptr,dims); }
 
+        /**
+         * @brief Construct a new Base_array object, allocate it and fill with the given value
+         * 
+         * @param dims size of each dimension
+         * @param fill_value value to fill the array with
+         */
         Base_array(const std::array<size_t,ND> dims, T fill_value)
         {
             init(nullptr,dims);
             fill(fill_value);
         }
 
+        /**
+         * @brief Copy Construct a new Base_array object from a std::vector
+         * 
+         * @param dims size of each dimension
+         * @param fill_values vector to construct from
+         */
         Base_array(const std::array<size_t,ND> dims, const std::vector<T>& fill_values)
         {
             init(nullptr,dims);
@@ -80,6 +122,13 @@ namespace arr
             std::copy(fill_values.begin(), fill_values.end(),begin());
         }
 
+        /**
+         * @brief Copy Construct a new Base_array object from a std::array
+         * 
+         * @tparam S size of the std::array
+         * @param dims size of each dimension
+         * @param fill_values std::array to copy construct from
+         */
         template<size_t S>
         Base_array(const std::array<size_t,ND> dims, const std::array<T,S>& fill_values)
         {
@@ -89,7 +138,27 @@ namespace arr
             std::copy(fill_values.begin(), fill_values.end(),begin());
         }
 
+        /**
+         * @brief Construct a new Base_array object from extant data, the class will not own the data
+         * 
+         * @param extant_data pointer to the contiguous data to construct from
+         * @param dims size of each dimension
+         */
         Base_array(T* extant_data, const std::array<size_t,ND> dims) { init(extant_data,dims); }
+
+        Base_array(Base_array<T,ND>& copy)
+        {
+            init(nullptr,copy.dims_);
+            std::copy(copy.begin(), copy.end(),begin());
+
+        }
+
+        Base_array(Base_array<T,ND>&& og)
+        {
+            init(nullptr,og.dims_);
+            std::copy(og.begin(), og.end(),begin());
+            delete og;
+        }
 
 
 
@@ -129,10 +198,10 @@ namespace arr
 
         void print() const
         {
-            printf("%li dimensional Array of shape: ",ND);
+            std::cout << ND <<"-dimensional Array of shape: ";
             for(size_t dim=0; dim<ND; dim++)
-                printf("%li ",dims_[dim]);
-            printf("\n");
+                std::cout << dims_[dim] << " ";
+            std::cout << std::endl;
 
             std::array<size_t,ND> indx = {0};
             print(ND,indx);
