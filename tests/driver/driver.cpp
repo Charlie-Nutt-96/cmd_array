@@ -1,14 +1,15 @@
 #include <stdio.h>
 
-#include "Array.h"
+#include "base_array.h"
 
 int main ()
 {
     printf("hello world!\n");
 
-    arr::Array2D<float> my_array(2,2,2.6);
-    my_array.print();
+    std::array<float,6> arr = {1.1,2.2,3.3,4.4,5.5,6.6};
+    arr::Array<float,2> my1darray(3,2,arr);
 
-    my_array.reshape(1,4);
-    my_array.print();
+    my1darray.print();
+
+    printf("%f\n",my1darray(1,1));
 }
