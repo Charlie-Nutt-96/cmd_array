@@ -1,7 +1,7 @@
 
 
-#ifndef ARRAY_H_
-#define ARRAY_H_
+#ifndef CMD_ARRAY_H_
+#define CMD_ARRAY_H_
 
 #include <array>
 #include <vector>
@@ -60,6 +60,7 @@ namespace cmda
                 strd *= dims_[idim];
                 strides_[idim-1] = strd;
             }
+        }
 
         public: 
         /**
