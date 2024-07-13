@@ -60,11 +60,6 @@ namespace cmda
                 strd *= dims_[idim];
                 strides_[idim-1] = strd;
             }
-            printf("Strides: ");
-            for(size_t dim=0; dim<ND-1; dim++)
-                printf("%li ",strides_[dim]);
-            printf("\n");
-        }
 
         public: 
         /**
