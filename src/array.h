@@ -62,12 +62,44 @@ namespace cmda
             }
         }
 
-        public: 
         /**
-         * @brief Destroy the Base_array object
+         * @brief copy function
+         * 
+         * @param c source for copy
+         */
+        void copy(const Base_array& c)
+        {
+            size_ = c.size_;
+            dims_ = c.dims_;
+            strides_ = c.strides_;
+            owns_data_ = true;
+            std::copy(c.begin(), c.end(),begin());
+        }
+
+        /**
+         * @brief move function
+         * 
+         * @param s source to move from
+         */
+        void move(Base_array&& s)
+        {
+            size_ = s.size_;
+            dims_ = s.dims_;
+            strides_ = s.strides_;
+            owns_data_ = s.owns_data_;
+            data = s.data;
+
+            // reset source
+            s.clear();
+        }
+
+        public: 
+
+        /**
+         * @brief Resets the Base_array object
          * 
          */
-        virtual ~Base_array()
+        void clear()
         {
             if (owns_data_ && data_!=nullptr)
                 delete[] data_;
@@ -78,12 +110,65 @@ namespace cmda
             data_ = nullptr;
         }
 
+        /**
+         * @brief Destroy the Base_array object
+         * 
+         */
+        virtual ~Base_array()
+        {
+            clear();
+        }
+
         //  constructors
         /**
          * @brief Construct a new Base_array object
          * 
          */
         Base_array() {}
+
+        /**
+         * @brief Construct a new Base_array object as a copy
+         * 
+         * @param c source to copy from
+         */
+        Base_array(const Base_array& c)
+        {
+            copy(c);
+        }
+
+        /**
+         * @brief copy assignment
+         * 
+         * @param c source to copy from
+         * @return Base_array& 
+         */
+        Base_array& operator=(const Base_array& c)
+        {
+            copy(c);
+            return *this;
+        }
+
+        /**
+         * @brief Construct a new Base_array object (move)
+         * 
+         * @param s source to move from
+         */
+        Base_array(Base_array&& s)
+        {
+            move(s);
+        }
+
+        /**
+         * @brief move assignment operator
+         * 
+         * @param c source of the move
+         * @return Base_array& 
+         */
+        Base_array& operator=(Base_array&& c)
+        {
+            move(c);
+            return *this;
+        }
         
         /**
          * @brief Construct a new Base_array object and allocate the size
@@ -141,22 +226,6 @@ namespace cmda
          * @param dims size of each dimension
          */
         Base_array(T* extant_data, const std::array<size_t,ND> dims) { init(extant_data,dims); }
-
-        Base_array(Base_array<T,ND>& copy)
-        {
-            init(nullptr,copy.dims_);
-            std::copy(copy.begin(), copy.end(),begin());
-
-        }
-
-        Base_array(Base_array<T,ND>&& og)
-        {
-            init(nullptr,og.dims_);
-            std::copy(og.begin(), og.end(),begin());
-            delete og;
-        }
-
-
 
         // iterators
         T* begin() const {return data_;}
