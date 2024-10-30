@@ -37,6 +37,7 @@ namespace cmda
          */
         void init (T* extant_data, std::array<size_t,ND> dims)
         {
+            clear();
             size_ = 1;
             for (size_t dim_len : dims)
                 size_ *= dim_len;
@@ -73,24 +74,9 @@ namespace cmda
             dims_ = c.dims_;
             strides_ = c.strides_;
             owns_data_ = true;
-            std::copy(c.begin(), c.end(),begin());
-        }
-
-        /**
-         * @brief move function
-         * 
-         * @param s source to move from
-         */
-        void move(Base_array&& s)
-        {
-            size_ = s.size_;
-            dims_ = s.dims_;
-            strides_ = s.strides_;
-            owns_data_ = s.owns_data_;
-            data = s.data;
-
-            // reset source
-            s.clear();
+           
+            data_ = new T[size_];
+            std::copy(c.begin(), c.end(), begin());
         }
 
         public: 
@@ -155,7 +141,15 @@ namespace cmda
          */
         Base_array(Base_array&& s)
         {
-            move(s);
+            size_ = s.size_;
+            dims_ = s.dims_;
+            strides_ = s.strides_;
+            owns_data_ = s.owns_data_;
+
+            data_ = s.data_;
+
+            s.owns_data_ = false;
+            s.clear();
         }
 
         /**
@@ -164,9 +158,22 @@ namespace cmda
          * @param c source of the move
          * @return Base_array& 
          */
-        Base_array& operator=(Base_array&& c)
+        Base_array& operator=(Base_array&& s)
         {
-            move(c);
+            if (this != &s)
+            {
+                clear();
+
+                size_ = s.size_;
+                dims_ = s.dims_;
+                strides_ = s.strides_;
+                owns_data_ = s.owns_data_;
+
+                data_ = s.data_;
+
+                s.owns_data_ = false;
+                s.clear();
+            }
             return *this;
         }
         
@@ -253,11 +260,6 @@ namespace cmda
             {
                 indx += dims[ii] * (strides_[ii]);
             }
-            printf("Index ");
-            for(size_t dd=0; dd<ND; dd++)
-                printf("%li ",dims[dd]);
-            printf("= %li\n",indx + dims[ND-1]);
-
             return indx + dims[ND-1];
         }
 
@@ -320,13 +322,39 @@ namespace cmda
 
         bool is_empty() const {return data_ == nullptr;}
 
+        bool is_equivalent_to(Base_array &c)
+        {
+            if(size_    != c.size_)    return false;
+            if(dims_    != c.dims_)    return false;
+            if(strides_ != c.strides_) return false;
+
+            for (int i=0; i<size_; i++) 
+                if (data_[i] != c.data_[i]) 
+                    return false;
+
+            return true;
+        }
+
+        bool has_equal_data(const std::vector<T> &c)
+        {
+            if(size_ != c.size()) 
+                return false;
+
+            for (int i=0; i<size_; i++) 
+                if (data_[i] != c[i]) 
+                    return false;
+
+            return true;
+        }
+
     };
 
 
     template<typename T, size_t ND> 
     class Array : public Base_array<T,ND> {};
 
-    template <typename T> class Array<T,1> : public Base_array<T,1>
+    template <typename T> 
+    class Array<T,1> : public Base_array<T,1>
     {
         private:
         using Base = Base_array<T,1>;
@@ -342,12 +370,13 @@ namespace cmda
         Array(size_t n1, std::array<T,S> &fill_values) : Base({n1},fill_values){}
         Array(size_t n1, std::vector<T> &fill_values) : Base({n1},fill_values){}
 
-        void allocate(size_t n1) {allocate({n1});}
+        void allocate(size_t n1) { Base::allocate({n1}); }
 
-        T& operator()(size_t n1) {return operator()({n1});}
+        T& operator()(size_t n1) {return Base::operator()({n1});}
     };
 
-    template <typename T> class Array<T,2> : public Base_array<T,2>
+    template <typename T> 
+    class Array<T,2> : public Base_array<T,2>
     {
         private:
         using Base = Base_array<T,2>;
@@ -363,12 +392,13 @@ namespace cmda
         Array(size_t n1, size_t n2, std::array<T,S> &fill_values) : Base({n1,n2},fill_values){}
         Array(size_t n1, size_t n2, std::vector<T> &fill_values) : Base({n1,n2},fill_values){}
 
-        void allocate(size_t n1, size_t n2) {allocate({n1,n2});}
+        void allocate(size_t n1, size_t n2) {Base::allocate({n1,n2});}
 
-        T& operator()(size_t n1, size_t n2) {return operator()({n1,n2});}
+        T& operator()(size_t n1, size_t n2) {return Base::operator()({n1,n2});}
     };
 
-    template <typename T> class Array<T,3> : public Base_array<T,3>
+    template <typename T> 
+    class Array<T,3> : public Base_array<T,3>
     {
         private:
         using Base = Base_array<T,3>;
@@ -384,12 +414,13 @@ namespace cmda
         Array(size_t n1, size_t n2, size_t n3, std::array<T,S> &fill_values) : Base({n1,n2,n3},fill_values){}
         Array(size_t n1, size_t n2, size_t n3, std::vector<T> &fill_values) : Base({n1,n2,n3},fill_values){}
 
-        void allocate(size_t n1, size_t n2, size_t n3) {allocate({n1,n2,n3});}
+        void allocate(size_t n1, size_t n2, size_t n3) {Base::allocate({n1,n2,n3});}
 
-        T& operator()(size_t n1, size_t n2, size_t n3) {return operator()({n1,n2,n3});}
+        T& operator()(size_t n1, size_t n2, size_t n3) {return Base::operator()({n1,n2,n3});}
     };
 
-    template <typename T> class Array<T,4> : public Base_array<T,4>
+    template <typename T> 
+    class Array<T,4> : public Base_array<T,4>
     {
         private:
         using Base = Base_array<T,4>;
@@ -405,9 +436,9 @@ namespace cmda
         Array(size_t n1, size_t n2, size_t n3, size_t n4, std::array<T,S> &fill_values) : Base({n1,n2,n3,n4},fill_values){}
         Array(size_t n1, size_t n2, size_t n3, size_t n4, std::vector<T> &fill_values) : Base({n1,n2,n3,n4},fill_values){}
 
-        void allocate(size_t n1, size_t n2, size_t n3, size_t n4) {allocate({n1,n2,n3,n4});}
+        void allocate(size_t n1, size_t n2, size_t n3, size_t n4) {Base::allocate({n1,n2,n3,n4});}
 
-        T& operator()(size_t n1, size_t n2, size_t n3, size_t n4) {return operator()({n1,n2,n3,n4});}
+        T& operator()(size_t n1, size_t n2, size_t n3, size_t n4) {return Base::operator()({n1,n2,n3,n4});}
     };
 }
 
